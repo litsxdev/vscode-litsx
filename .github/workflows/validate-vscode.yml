@@ -1,0 +1,60 @@
+name: Validate Extension
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+concurrency:
+  group: validate-vscode-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    name: Validate Extension
+    runs-on: ubuntu-latest
+    env:
+      LITSX_SOURCE_DIR: vendor/litsx
+    steps:
+      - name: Checkout extension repository
+        uses: actions/checkout@v6
+
+      - name: Checkout LitSX source repository
+        uses: actions/checkout@v6
+        with:
+          repository: litsxdev/litsx
+          path: vendor/litsx
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 20
+          package-manager-cache: false
+
+      - name: Enable Yarn
+        run: |
+          corepack enable
+          corepack prepare yarn@4.10.3 --activate
+
+      - name: Cache Yarn state
+        uses: actions/cache@v5
+        with:
+          path: |
+            .yarn/install-state.gz
+            .yarn-cache
+          key: ${{ runner.os }}-yarn4-${{ hashFiles('yarn.lock', 'package.json', '.yarnrc.yml') }}
+          restore-keys: |
+            ${{ runner.os }}-yarn4-
+
+      - name: Install dependencies
+        run: corepack yarn install --immutable
+
+      - name: Build extension
+        run: corepack yarn build
+
+      - name: Package VSIX
+        run: corepack yarn package:vsix

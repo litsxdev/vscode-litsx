@@ -1,0 +1,8 @@
+**
+!dist/**
+dist/*.vsix
+!syntaxes/**
+!icon.png
+!LICENSE
+!README.md
+!package.json
