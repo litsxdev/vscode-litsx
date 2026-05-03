@@ -53,7 +53,8 @@
     "@rollup/plugin-commonjs": "^29.0.2",
     "@rollup/plugin-node-resolve": "^16.0.3",
     "@vscode/vsce": "^3.9.1",
-    "rollup": "^4.60.2"
+    "rollup": "^4.60.2",
+    "shiki": "^2.1.0"
   },
   "contributes": {
     "commands": [
