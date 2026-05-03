@@ -53,6 +53,9 @@ jobs:
       - name: Install dependencies
         run: corepack yarn install --immutable
 
+      - name: Run tests
+        run: corepack yarn test
+
       - name: Build extension
         run: corepack yarn build
 
