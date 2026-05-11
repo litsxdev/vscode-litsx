@@ -11,7 +11,7 @@ const LITSX_SYNTAX_PATTERNS = [
   /<[^>]*\s@[A-Za-z_][\w:-]*(?=[\s=>/])/m,
   /<[^>]*\s\.[A-Za-z_][\w:-]*(?=[\s=>/])/m,
   /<[^>]*\s\?[A-Za-z_][\w:-]*(?=[\s=>/])/m,
-  /(^|\n)\s*\^[A-Za-z_][\w]*\s*\(/m,
+  /(^|\n)\s*static\s+[A-Za-z_$][\w$]*\s*=/m,
 ];
 
 function detectLitsxSyntax(text) {

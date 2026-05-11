@@ -11,6 +11,31 @@ const syntaxesDir = path.resolve(repoRoot, "syntaxes");
 
 const { litsxJsxLanguage, litsxTsxLanguage } = await import(pathToFileURL(sourceModulePath).href);
 
+function stripLegacyHoistSyntax(grammar) {
+  const nextGrammar = structuredClone(grammar);
+  const hoistPatterns = nextGrammar.repository?.["litsx-hoists"]?.patterns;
+  if (Array.isArray(hoistPatterns)) {
+    nextGrammar.repository["litsx-hoists"].patterns = hoistPatterns.filter(
+      (pattern) => !pattern?.match?.includes("(\\^)"),
+    );
+  }
+
+  const stylePatterns = nextGrammar.repository?.["litsx-styles-css"]?.patterns;
+  if (Array.isArray(stylePatterns)) {
+    nextGrammar.repository["litsx-styles-css"].patterns = stylePatterns.filter(
+      (pattern) => !pattern?.begin?.includes("(\\^)"),
+    );
+  }
+
+  return nextGrammar;
+}
+
 fs.mkdirSync(syntaxesDir, { recursive: true });
-fs.writeFileSync(path.join(syntaxesDir, "litsx-jsx.tmLanguage.json"), `${JSON.stringify(litsxJsxLanguage, null, 2)}\n`);
-fs.writeFileSync(path.join(syntaxesDir, "litsx.tmLanguage.json"), `${JSON.stringify(litsxTsxLanguage, null, 2)}\n`);
+fs.writeFileSync(
+  path.join(syntaxesDir, "litsx-jsx.tmLanguage.json"),
+  `${JSON.stringify(stripLegacyHoistSyntax(litsxJsxLanguage), null, 2)}\n`,
+);
+fs.writeFileSync(
+  path.join(syntaxesDir, "litsx.tmLanguage.json"),
+  `${JSON.stringify(stripLegacyHoistSyntax(litsxTsxLanguage), null, 2)}\n`,
+);

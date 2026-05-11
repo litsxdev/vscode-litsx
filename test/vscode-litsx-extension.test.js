@@ -393,7 +393,7 @@ describe("vscode-litsx extension activation", () => {
       uri: "file:///virtual/component.litsx",
       fsPath: "/virtual/component.litsx",
       languageId: "litsx",
-      text: "^styles(`:host { color: red; }`)\nconst view = <button @click={save} />;",
+      text: "class Card { static styles = `:host { color: red; }`; }\nconst view = <button @click={save} />;",
     });
     const vscodeMock = createVscodeMock({
       documents: [document],

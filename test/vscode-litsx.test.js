@@ -93,10 +93,11 @@ describe("vscode-litsx", () => {
     assert.ok(attributePatterns.some((pattern) => pattern.match.includes("(@)")));
     assert.ok(attributePatterns.some((pattern) => pattern.match.includes("(\\?)")));
     assert.ok(attributePatterns.some((pattern) => pattern.match.includes("(\\.)")));
-    assert.ok(hoistPatterns.some((pattern) => pattern.match.includes("(\\^)")));
+    assert.ok(hoistPatterns.some((pattern) => pattern.match.includes("(\\bstatic\\b)")));
+    assert.ok(!hoistPatterns.some((pattern) => pattern.match?.includes("(\\^)")));
     assert.strictEqual(
-      hoistPatterns[0].captures[2].name,
-      "markup.italic.litsx entity.name.hoist.litsx",
+      hoistPatterns[0].captures[3].name,
+      "entity.name.hoist.litsx",
     );
     assert.deepStrictEqual(tagAttributePatterns[0], {
       include: "#litsx-jsx-tag-attribute",
@@ -114,12 +115,13 @@ describe("vscode-litsx", () => {
     });
   });
 
-  it("treats ^styles templates as embedded css in the litsx grammar", () => {
+  it("treats static styles templates as embedded css in the litsx grammar", () => {
     const grammar = readJson("syntaxes/litsx.tmLanguage.json");
     const stylesPattern = grammar.repository["litsx-styles-css"].patterns[0];
 
-    assert.match(stylesPattern.begin, /\^/);
+    assert.match(stylesPattern.begin, /\\bstatic\\b/);
     assert.match(stylesPattern.begin, /styles/);
+    assert.doesNotMatch(stylesPattern.begin, /\(\\\^\)/);
     assert.strictEqual(stylesPattern.contentName, "meta.embedded.block.css");
     assert.deepStrictEqual(stylesPattern.patterns, [{ include: "#litsx-css-root" }]);
     assert.ok(grammar.repository["litsx-css-root"]);
@@ -131,8 +133,12 @@ describe("vscode-litsx", () => {
       true,
     );
     assert.strictEqual(
-      detectLitsxSyntax(`const view = () => {\n  ^styles(\`button { color: red; }\`);\n  return <button />;\n};`),
+      detectLitsxSyntax(`class Card {\n  static styles = \`button { color: red; }\`;\n  render() { return <button />; }\n}`),
       true,
+    );
+    assert.strictEqual(
+      detectLitsxSyntax(`const view = () => {\n  ^styles(\`button { color: red; }\`);\n  return <button />;\n};`),
+      false,
     );
     assert.strictEqual(
       detectLitsxSyntax(`const view = <button onClick={handleClick} disabled={busy} />;`),
@@ -165,9 +171,9 @@ describe("vscode-litsx", () => {
   });
 
   it("computes authored hover and completions for LitSX language modes", async () => {
-    const sourceText = `const view = <button @cl />;\n^styles(\`button {}\`);`;
+    const sourceText = `const view = <button @cl />;\nclass Card { static styles = \`button {}\`; }`;
     const attributePosition = sourceText.indexOf("@cl") + 2;
-    const hoistPosition = sourceText.indexOf("^styles") + 1;
+    const hoistPosition = sourceText.indexOf("styles");
 
     const hover = await computeLitsxHover(sourceText, "litsx", attributePosition);
     const hoistHover = await computeLitsxHover(sourceText, "litsx", hoistPosition);
@@ -180,7 +186,7 @@ describe("vscode-litsx", () => {
 
     assert.match(hover.code, /@cl/);
     assert.match(hover.documentation, /LitSX event listener binding/);
-    assert.match(hoistHover.code, /\^styles/);
+    assert.match(hoistHover.code, /styles/);
     assert.ok(completions.some((entry) => entry.label === "@click"));
   });
 

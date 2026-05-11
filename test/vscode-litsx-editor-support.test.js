@@ -98,12 +98,12 @@ describe("vscode-litsx editor support", () => {
     assert.ok(completions.some((entry) => entry.label === "?disabled"));
   }, 15000);
 
-  it("uses hoist hover in project mode and keeps project-backed scope completions", async () => {
+  it("uses static hoist hover in project mode and keeps project-backed scope completions", async () => {
     const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "litsx-vscode-hoist-"));
     const filePath = path.join(tempDir, "component.litsx");
     const sourceText = [
       "const count = 1;",
-      "^styles(`button { color: red; }`);",
+      "class Card { static styles = `button { color: red; }`; }",
       "const view = <button>{count}</button>;",
       "cou",
       "",
@@ -115,7 +115,7 @@ describe("vscode-litsx editor support", () => {
       filePath,
       sourceText,
       "litsx",
-      sourceText.indexOf("^styles") + 1,
+      sourceText.indexOf("styles"),
     );
     const completions = await computeLitsxProjectCompletions(
       filePath,
@@ -125,7 +125,7 @@ describe("vscode-litsx editor support", () => {
       createCompletionKinds(),
     );
 
-    assert.match(hover.code, /\^styles/);
+    assert.match(hover.code, /styles/);
     assert.ok(completions.some((entry) => entry.label === "count"));
   });
 

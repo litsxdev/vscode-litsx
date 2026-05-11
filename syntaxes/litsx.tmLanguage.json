@@ -7873,13 +7873,13 @@
     "litsx-hoists": {
       "patterns": [
         {
-          "match": "(\\^)([A-Za-z_$][\\w$]*)(?=\\s*\\()",
+          "match": "(\\bstatic\\b)(\\s+)([A-Za-z_$][\\w$]*)(?=\\s*=)",
           "captures": {
             "1": {
-              "name": "markup.italic.litsx keyword.operator.litsx"
+              "name": "keyword.control.litsx"
             },
-            "2": {
-              "name": "markup.italic.litsx entity.name.hoist.litsx"
+            "3": {
+              "name": "entity.name.hoist.litsx"
             }
           }
         }
@@ -8026,15 +8026,15 @@
     "litsx-styles-css": {
       "patterns": [
         {
-          "begin": "(\\^)(styles)(\\s*\\()\\s*(`)",
+          "begin": "(\\bstatic\\b)(\\s+)(styles)(\\s*=\\s*)(`)",
           "beginCaptures": {
             "1": {
-              "name": "markup.italic.litsx keyword.operator.litsx"
+              "name": "keyword.control.litsx"
             },
-            "2": {
-              "name": "markup.italic.litsx entity.name.hoist.litsx"
+            "3": {
+              "name": "entity.name.hoist.litsx"
             },
-            "4": {
+            "5": {
               "name": "string.template.ts punctuation.definition.string.begin.ts"
             }
           },

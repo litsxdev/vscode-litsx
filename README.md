@@ -7,8 +7,8 @@ Official VS Code support for LitSX-authored source.
 
 This extension focuses on the editor layer that TypeScript plugins do not cover well on their own:
 
-- TextMate highlighting for `@event`, `.prop`, `?attr`, and `^hoists(...)`
-- CSS highlighting inside `^styles(\`...\`)`
+- TextMate highlighting for `@event`, `.prop`, `?attr`, and static hoists such as `static styles = ...`
+- CSS highlighting inside `static styles = \`...\``
 - workspace defaults that keep the TypeScript server aligned with LitSX
 - a light italic treatment for LitSX-specific attrs and hoists
 

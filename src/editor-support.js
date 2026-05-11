@@ -164,7 +164,7 @@ function startsAtAuthoredSyntax(sourceText, start) {
     return false;
   }
 
-  return "@.?^".includes(sourceText[start]);
+  return "@.?".includes(sourceText[start]);
 }
 
 function readFileText(fileName, overlays) {
