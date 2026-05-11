@@ -498,25 +498,25 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@litsx/jsx-authoring@npm:^0.2.1":
-  version: 0.2.1
-  resolution: "@litsx/jsx-authoring@npm:0.2.1"
+"@litsx/jsx-authoring@npm:^0.3.0":
+  version: 0.3.0
+  resolution: "@litsx/jsx-authoring@npm:0.3.0"
   dependencies:
     magic-string: "npm:^0.30.21"
-  checksum: 10c0/5c90999640d3da1096061796d8ae17a30f990e9db2c572038dfeee775fa4afca8040627e8e9252238fa1708082cace32597baa6716526ab758165067a2eab995
+  checksum: 10c0/e9fa92b7b4d2790cc4a35f5c9ef1eaf652e1c4d6ee23ea1399b14e0512a65266c3998e1a69f8e3358d2643ebd226d39ef54b20b5c606556de05e441158649ae6
   languageName: node
   linkType: hard
 
-"@litsx/typescript-plugin@npm:^0.2.0":
-  version: 0.2.0
-  resolution: "@litsx/typescript-plugin@npm:0.2.0"
+"@litsx/typescript-plugin@npm:^0.3.0":
+  version: 0.3.0
+  resolution: "@litsx/typescript-plugin@npm:0.3.0"
   dependencies:
     "@babel/parser": "npm:^7.29.3"
   peerDependencies:
     typescript: ">=5"
   bin:
     litsx-tsc: dist/litsx-tsc.js
-  checksum: 10c0/64e08e950e5da5a64ce57b47cb3a551abaa44f9a80ead4ced8b2b9d3e7976f145f2cde2805b9118966e48878cc67b3dab9189392313c3ed7d965b1eadbc81bed
+  checksum: 10c0/c2bc9fa1264446615336e5d584a8bf714c46a40e2e12dff81ba3d88197e967526ccf54aeb0ff4b0d795d3125fe9566ac79260876372718e92d952b3f47041c33
   languageName: node
   linkType: hard
 
@@ -5137,8 +5137,8 @@ __metadata:
   resolution: "vscode-litsx@workspace:."
   dependencies:
     "@changesets/cli": "npm:^2.31.0"
-    "@litsx/jsx-authoring": "npm:^0.2.1"
-    "@litsx/typescript-plugin": "npm:^0.2.0"
+    "@litsx/jsx-authoring": "npm:^0.3.0"
+    "@litsx/typescript-plugin": "npm:^0.3.0"
     "@rollup/plugin-commonjs": "npm:^29.0.2"
     "@rollup/plugin-node-resolve": "npm:^16.0.3"
     "@vscode/vsce": "npm:^3.9.1"
