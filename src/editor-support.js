@@ -1,16 +1,23 @@
 import fs from "fs";
 import path from "path";
-import { createRequire } from "module";
-
-const require = createRequire(import.meta.url);
+import ts from "typescript";
+import { fileURLToPath } from "url";
 
 let authoredModulePromise = null;
-let tsModule = null;
 const PROJECT_SERVICE_CACHE = new Map();
+const MODULE_DIR = path.dirname(fileURLToPath(import.meta.url));
 const QUERY_FILE_SUFFIX_BY_LANGUAGE_ID = {
   litsx: ".tsx",
   "litsx-jsx": ".jsx",
 };
+const SUPPORTED_SOURCE_EXTENSIONS = [
+  ".litsx.jsx",
+  ".litsx",
+  ".tsx",
+  ".ts",
+  ".jsx",
+  ".js",
+];
 const SCRIPT_KIND_BY_EXTENSION = {
   "litsx.jsx": "JSX",
   litsx: "TSX",
@@ -75,11 +82,26 @@ async function loadAuthoredModule() {
 }
 
 function loadTypeScript() {
-  if (!tsModule) {
-    tsModule = require("typescript");
+  return ts;
+}
+
+function getBundledTypeScriptLibDir() {
+  const candidateDirs = [
+    path.resolve(MODULE_DIR, "vendor", "typescript", "lib"),
+    path.resolve(MODULE_DIR, "..", "dist", "vendor", "typescript", "lib"),
+  ];
+
+  return candidateDirs.find((candidateDir) => fs.existsSync(path.join(candidateDir, "lib.esnext.full.d.ts"))) ?? null;
+}
+
+function getDefaultLibFilePath(ts, options) {
+  const bundledLibDir = getBundledTypeScriptLibDir();
+  if (!bundledLibDir) {
+    return ts.getDefaultLibFilePath(options);
   }
 
-  return tsModule;
+  const libFileName = ts.getDefaultLibFileName(options);
+  return path.join(bundledLibDir, libFileName);
 }
 
 function getParserPlugins(languageId) {
@@ -134,6 +156,56 @@ function getExtraFileExtensions(ts) {
       scriptKind: ts.ScriptKind.JSX,
     },
   ];
+}
+
+function getModuleExtension(ts, fileName) {
+  if (fileName.endsWith(".litsx.jsx") || fileName.endsWith(".jsx")) {
+    return ts.Extension.Jsx;
+  }
+
+  if (fileName.endsWith(".litsx") || fileName.endsWith(".tsx")) {
+    return ts.Extension.Tsx;
+  }
+
+  if (fileName.endsWith(".ts")) {
+    return ts.Extension.Ts;
+  }
+
+  return ts.Extension.Js;
+}
+
+function isPathLikeModuleName(moduleName) {
+  return moduleName.startsWith("./") || moduleName.startsWith("../") || moduleName.startsWith("/");
+}
+
+function stripSupportedSourceExtension(filePath) {
+  return SUPPORTED_SOURCE_EXTENSIONS.find((extension) => filePath.endsWith(extension))
+    ? filePath.slice(0, -SUPPORTED_SOURCE_EXTENSIONS.find((extension) => filePath.endsWith(extension)).length)
+    : filePath;
+}
+
+function getTransparentResolutionCandidates(modulePath) {
+  const requestedExtension = SUPPORTED_SOURCE_EXTENSIONS.find((extension) => modulePath.endsWith(extension)) ?? null;
+
+  if (requestedExtension) {
+    return [
+      modulePath,
+      path.join(modulePath, `index${requestedExtension}`),
+    ];
+  }
+
+  return [
+    ...SUPPORTED_SOURCE_EXTENSIONS.map((extension) => `${modulePath}${extension}`),
+    ...SUPPORTED_SOURCE_EXTENSIONS.map((extension) => path.join(modulePath, `index${extension}`)),
+  ];
+}
+
+function createResolvedModule(ts, resolvedFileName) {
+  return {
+    resolvedFileName,
+    extension: getModuleExtension(ts, resolvedFileName),
+    isExternalLibraryImport: false,
+  };
 }
 
 function remapDisplayParts(parts, remapVirtualText) {
@@ -241,6 +313,10 @@ async function getOrCreateProjectService(fileName, sourceText, languageId) {
     const overlays = new Map();
     const virtualizationCache = new Map();
 
+    function fileExistsForResolution(nextFileName) {
+      return overlays.has(normalizeFileName(nextFileName)) || ts.sys.fileExists(nextFileName);
+    }
+
     function getScriptKind(nextFileName) {
       const extension = /\.((?:litsx\.jsx)|litsx|tsx|jsx|ts|js)$/.exec(nextFileName)?.[1];
       const scriptKindName = extension ? SCRIPT_KIND_BY_EXTENSION[extension] : undefined;
@@ -284,6 +360,46 @@ async function getOrCreateProjectService(fileName, sourceText, languageId) {
       return record;
     }
 
+    function resolveTransparentModuleName(moduleName, containingFile) {
+      if (!isPathLikeModuleName(moduleName)) {
+        return null;
+      }
+
+      const candidateBase = path.resolve(path.dirname(containingFile), moduleName);
+      for (const candidate of getTransparentResolutionCandidates(candidateBase)) {
+        if (fileExistsForResolution(candidate)) {
+          return createResolvedModule(ts, candidate);
+        }
+      }
+
+      return null;
+    }
+
+    function resolveModule(moduleName, containingFile) {
+      const resolved = ts.resolveModuleName(
+        moduleName,
+        containingFile,
+        compilerOptions,
+        {
+          fileExists: fileExistsForResolution,
+          readFile(nextFileName) {
+            return readFileText(nextFileName, overlays);
+          },
+          directoryExists(nextDirName) {
+            return ts.sys.directoryExists?.(nextDirName) ?? true;
+          },
+          getDirectories(nextDirName) {
+            return ts.sys.getDirectories?.(nextDirName) ?? [];
+          },
+          realpath(nextFileName) {
+            return ts.sys.realpath?.(nextFileName) ?? nextFileName;
+          },
+        },
+      ).resolvedModule;
+
+      return resolved ?? resolveTransparentModuleName(moduleName, containingFile);
+    }
+
     const host = {
       extraFileExtensions: getExtraFileExtensions(ts),
       getCompilationSettings() {
@@ -293,7 +409,7 @@ async function getOrCreateProjectService(fileName, sourceText, languageId) {
         return configPath ? path.dirname(configPath) : path.dirname(fileName);
       },
       getDefaultLibFileName(options) {
-        return ts.getDefaultLibFilePath(options);
+        return getDefaultLibFilePath(ts, options);
       },
       getScriptFileNames() {
         return rootNames;
@@ -308,10 +424,16 @@ async function getOrCreateProjectService(fileName, sourceText, languageId) {
         return getSnapshotRecord(nextFileName)?.snapshot;
       },
       fileExists(nextFileName) {
-        return overlays.has(normalizeFileName(nextFileName)) || ts.sys.fileExists(nextFileName);
+        return fileExistsForResolution(nextFileName);
       },
       readFile(nextFileName) {
         return readFileText(nextFileName, overlays);
+      },
+      resolveModuleNames(moduleNames, containingFile) {
+        return moduleNames.map((moduleName) => resolveModule(moduleName, containingFile));
+      },
+      resolveModuleNameLiterals(moduleLiterals, containingFile) {
+        return moduleLiterals.map(({ text }) => ({ resolvedModule: resolveModule(text, containingFile) }));
       },
       readDirectory(...args) {
         return ts.sys.readDirectory(...args);

@@ -7,7 +7,6 @@ const EXTERNAL_IDS = new Set([
   "path",
   "url",
   "vscode",
-  "typescript",
 ]);
 
 function isExternal(id) {

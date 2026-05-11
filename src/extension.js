@@ -148,11 +148,30 @@ function activate(context) {
     return vscode.workspace.getConfiguration("litsx").get("traceDiagnostics", false);
   }
 
+  function formatDiagnosticMessage(messageText, indent = "") {
+    if (typeof messageText === "string") {
+      return messageText;
+    }
+
+    if (!messageText || typeof messageText !== "object") {
+      return String(messageText ?? "");
+    }
+
+    const head = `${indent}${messageText.messageText ?? ""}`;
+    const next = Array.isArray(messageText.next)
+      ? messageText.next
+        .map((entry) => formatDiagnosticMessage(entry, `${indent}  `))
+        .filter(Boolean)
+      : [];
+
+    return [head, ...next].filter(Boolean).join("\n");
+  }
+
   function formatDiagnosticLog(document, diagnostic) {
     const start = document.positionAt(diagnostic.start ?? 0);
     const end = document.positionAt((diagnostic.start ?? 0) + (diagnostic.length ?? 0));
     const excerpt = document.getText(new vscode.Range(start, end)).replace(/\n/g, "\\n");
-    return `[${diagnostic.code ?? "?"}] ${start.line + 1}:${start.character + 1}-${end.line + 1}:${end.character + 1} "${excerpt}" ${String(diagnostic.messageText ?? "")}`;
+    return `[${diagnostic.code ?? "?"}] ${start.line + 1}:${start.character + 1}-${end.line + 1}:${end.character + 1} "${excerpt}" ${formatDiagnosticMessage(diagnostic.messageText)}`;
   }
 
   async function refreshDiagnostics(document) {
@@ -198,7 +217,7 @@ function activate(context) {
       const end = latestDocument.positionAt((diagnostic.start ?? 0) + (diagnostic.length ?? 0));
       const vscodeDiagnostic = new vscode.Diagnostic(
         new vscode.Range(start, end),
-        String(diagnostic.messageText ?? ""),
+        formatDiagnosticMessage(diagnostic.messageText),
         toSeverity(vscode, diagnostic),
       );
       vscodeDiagnostic.code = diagnostic.code;

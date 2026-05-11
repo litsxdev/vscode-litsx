@@ -582,6 +582,55 @@ describe("vscode-litsx extension activation", () => {
     assert.strictEqual(hover, null);
   });
 
+  it("formats nested diagnostic message chains instead of rendering [object Object]", async () => {
+    const document = createDocument({
+      uri: "file:///virtual/message-chain.litsx",
+      fsPath: "/virtual/message-chain.litsx",
+      languageId: "litsx",
+      text: "const view = <button class={42} />;",
+    });
+    const vscodeMock = createVscodeMock({
+      documents: [document],
+      activeDocument: document,
+      config: {
+        "litsx.traceDiagnostics": true,
+      },
+    });
+
+    const extension = await loadExtension({
+      vscodeMock,
+      editorSupportMock: {
+        async computeLitsxCompletions() { return []; },
+        async computeLitsxDiagnostics() { return []; },
+        async computeLitsxHover() { return null; },
+        async computeLitsxProjectCompletions() { return []; },
+        async computeLitsxProjectDiagnostics() {
+          return [{
+            code: 2322,
+            start: document.getText().indexOf("class"),
+            length: "class".length,
+            messageText: {
+              messageText: "Type 'number' is not assignable to type 'string'.",
+              next: [
+                { messageText: "The expected type comes from property 'class' which is declared here." },
+              ],
+            },
+          }];
+        },
+        async computeLitsxProjectHover() { return null; },
+      },
+    });
+
+    extension.activate({ subscriptions: [], workspaceState: createWorkspaceState() });
+    await flushAsyncWork();
+
+    const [, diagnostics] = vscodeMock.diagnosticsState.setCalls.at(-1);
+    assert.match(diagnostics[0].message, /Type 'number' is not assignable to type 'string'\./);
+    assert.match(diagnostics[0].message, /property 'class'/);
+    assert.ok(!diagnostics[0].message.includes("[object Object]"));
+    assert.ok(vscodeMock.outputLines.some((line) => line.includes("property 'class'")));
+  });
+
   it("supports jsx-specific suggestion labels, same-language switches, and current-content dismissals", async () => {
     const jsxDocument = createDocument({
       uri: "file:///virtual/component.jsx",

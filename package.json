@@ -31,7 +31,7 @@
     "url": "https://github.com/litsxdev/vscode-litsx/issues"
   },
   "scripts": {
-    "build": "node ./scripts/build-grammars.mjs && rollup --config rollup.config.mjs",
+    "build": "node ./scripts/build-grammars.mjs && rollup --config rollup.config.mjs && node ./scripts/sync-typescript-libs.mjs",
     "package:vsix": "yarn build && node -e \"require('node:fs').rmSync('dist/vscode-litsx.vsix', { force: true })\" && vsce package --no-dependencies --out dist/vscode-litsx.vsix",
     "package:vsix:pre-release": "yarn build && node -e \"require('node:fs').rmSync('dist/vscode-litsx.vsix', { force: true })\" && vsce package --no-dependencies --pre-release --out dist/vscode-litsx.vsix",
     "test": "vitest run test/*.test.js",

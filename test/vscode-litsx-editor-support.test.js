@@ -174,6 +174,59 @@ describe("vscode-litsx editor support", () => {
     assert.ok(completions.every((entry) => !entry.label.startsWith("__litsx_")));
   }, 15000);
 
+  it("resolves extensionless LitSX-family imports transparently but rejects explicit wrong extensions", async () => {
+    const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "litsx-vscode-resolve-"));
+    const filePath = path.join(tempDir, "component.litsx");
+    const sourceText = [
+      'import { buttonLabel } from "./litsx-button.litsx";',
+      'import { buttonCount } from "./button-count";',
+      'import { wrongButtonLabel } from "./litsx-button.litsx.jsx";',
+      "const summary = `${buttonLabel}:${buttonCount}`;",
+      "const extra = wrongButtonLabel;",
+      "const broken: number = summary;",
+      "",
+    ].join("\n");
+
+    fs.writeFileSync(
+      path.join(tempDir, "tsconfig.json"),
+      JSON.stringify({
+        compilerOptions: {
+          jsx: "preserve",
+          target: "ES2022",
+          module: "ESNext",
+          strict: true,
+          noUnusedLocals: false,
+        },
+        include: ["component.litsx", "litsx-button.litsx", "button-count.tsx"],
+      }),
+    );
+    fs.writeFileSync(
+      path.join(tempDir, "litsx-button.litsx"),
+      [
+        'export const buttonLabel = "Primary";',
+        "",
+      ].join("\n"),
+    );
+    fs.writeFileSync(
+      path.join(tempDir, "button-count.tsx"),
+      [
+        "export const buttonCount = 2;",
+        "",
+      ].join("\n"),
+    );
+    fs.writeFileSync(filePath, sourceText);
+
+    const diagnostics = await computeLitsxProjectDiagnostics(filePath, sourceText, "litsx");
+
+    assert.ok(diagnostics.some((diagnostic) => diagnostic.code === 2322));
+    assert.ok(
+      diagnostics.some((diagnostic) => (
+        diagnostic.code === 2307 &&
+        String(diagnostic.messageText).includes("./litsx-button.litsx.jsx")
+      )),
+    );
+  }, 15000);
+
   it("falls back to project type hover and scope completions when direct language-service data is missing", async () => {
     const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "litsx-vscode-fallback-"));
     const filePath = path.join(tempDir, "component.litsx");
