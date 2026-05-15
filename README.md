@@ -67,7 +67,7 @@ For the strongest TypeScript experience, install the LitSX TypeScript plugin in 
 }
 ```
 
-Generated LitSX projects already include the recommended VS Code settings and extension recommendation.
+If you are starting from scratch, [`create-litsx-app`](https://www.npmjs.com/package/create-litsx-app) can scaffold a LitSX project with the recommended VS Code settings and extension recommendation already in place.
 
 ## Commands
 
