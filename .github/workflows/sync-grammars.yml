@@ -68,6 +68,20 @@ jobs:
       - name: Regenerate grammars
         run: node scripts/build-grammars.mjs
 
+      - name: Create changeset
+        run: |
+          if git diff --quiet -- syntaxes; then
+            exit 0
+          fi
+
+          printf '%s\n' \
+            '---' \
+            '"vscode-litsx": patch' \
+            '---' \
+            '' \
+            'Update generated TextMate grammars from the latest LitSX source.' \
+            > .changeset/sync-generated-grammars.md
+
       - name: Open grammar sync pull request
         uses: peter-evans/create-pull-request@v7
         with:
@@ -79,5 +93,6 @@ jobs:
           body: "Regenerates the checked-in TextMate grammars from the latest `litsxdev/litsx` source."
           labels: automation,grammars
           add-paths: |
+            .changeset/sync-generated-grammars.md
             syntaxes/litsx-jsx.tmLanguage.json
             syntaxes/litsx.tmLanguage.json
