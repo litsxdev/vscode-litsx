@@ -11,7 +11,7 @@ import {
   inferLitsxAttributeInfoAtPosition,
   inferLitsxStaticHoistInfoAtPosition,
 } from "@litsx/typescript-plugin/virtual-source";
-import { createLitsxEditorSession } from "../../litsx/packages/typescript-plugin-litsx/src/editor-session.js";
+import { createLitsxEditorSession } from "@litsx/typescript-plugin/editor-session";
 
 const MODULE_DIR = path.dirname(fileURLToPath(import.meta.url));
 const require = createRequire(import.meta.url);

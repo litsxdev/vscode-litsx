@@ -498,25 +498,70 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@litsx/jsx-authoring@npm:^0.3.0":
-  version: 0.3.0
-  resolution: "@litsx/jsx-authoring@npm:0.3.0"
-  dependencies:
-    magic-string: "npm:^0.30.21"
-  checksum: 10c0/e9fa92b7b4d2790cc4a35f5c9ef1eaf652e1c4d6ee23ea1399b14e0512a65266c3998e1a69f8e3358d2643ebd226d39ef54b20b5c606556de05e441158649ae6
+"@lit-labs/ssr-dom-shim@npm:^1.5.0":
+  version: 1.6.0
+  resolution: "@lit-labs/ssr-dom-shim@npm:1.6.0"
+  checksum: 10c0/deffcfd765d268820beef600a1c1cf9d3cf1a5cb4bbe7e80843796ff33d1a122f4e5651ef4a44b33d36e5fa6538e6ee87a95b9d40b4a26cabf3c35b45194c87a
   languageName: node
   linkType: hard
 
-"@litsx/typescript-plugin@npm:^0.4.0":
-  version: 0.4.0
-  resolution: "@litsx/typescript-plugin@npm:0.4.0"
+"@lit/context@npm:^1.1.6":
+  version: 1.1.6
+  resolution: "@lit/context@npm:1.1.6"
+  dependencies:
+    "@lit/reactive-element": "npm:^1.6.2 || ^2.1.0"
+  checksum: 10c0/203f761eda19c8b37d77f01d9a0148535c5b28c47b76e28b321cb6e5ed0546c45332512e68b1647ce92ca67690d8c66de31972ec115410b080d69fa25a5d86f3
+  languageName: node
+  linkType: hard
+
+"@lit/reactive-element@npm:^1.6.2 || ^2.1.0, @lit/reactive-element@npm:^2.1.2":
+  version: 2.1.2
+  resolution: "@lit/reactive-element@npm:2.1.2"
+  dependencies:
+    "@lit-labs/ssr-dom-shim": "npm:^1.5.0"
+  checksum: 10c0/557069ce6ebbbafb1140e1e0a25ce73d3501bf455cda231d42bb131baa9065c54b6b7ca1655507eede397decd7ddde16c84192cb72a07d4edf41d54e07725933
+  languageName: node
+  linkType: hard
+
+"@litsx/jsx-authoring@npm:^0.3.1":
+  version: 0.3.1
+  resolution: "@litsx/jsx-authoring@npm:0.3.1"
+  dependencies:
+    magic-string: "npm:^0.30.21"
+  checksum: 10c0/37a5914e64d8d3a60e270ead1f1378d072b77603480945feef925088158093662781a70b69d7ce549f62be6233471377ad7227da6b66dd49cbf1e85f920f6b9d
+  languageName: node
+  linkType: hard
+
+"@litsx/light-dom-registry@npm:^0.2.4":
+  version: 0.2.4
+  resolution: "@litsx/light-dom-registry@npm:0.2.4"
+  checksum: 10c0/062cd93910865dff0d6d0f9fa22519b23374bc6274dd2380a44bd226b3eba26e3b187d8b75097ec5a70f05fe2fb5982a36c2ea05cf4d5bb31758d1117126d71b
+  languageName: node
+  linkType: hard
+
+"@litsx/litsx@npm:^0.3.5":
+  version: 0.3.5
+  resolution: "@litsx/litsx@npm:0.3.5"
+  dependencies:
+    "@lit/context": "npm:^1.1.6"
+    "@lit/reactive-element": "npm:^2.1.2"
+    "@litsx/light-dom-registry": "npm:^0.2.4"
+  peerDependencies:
+    lit: ">=3"
+  checksum: 10c0/9c0bb4df6cc54fba9669d51d370e4c25e31c1c0d307cfeece1bd1615984d3acb4e28899663dc931d3ca65f33817c2f3d80dadd50f97ceeb5ef733b49e94857a7
+  languageName: node
+  linkType: hard
+
+"@litsx/typescript-plugin@npm:^0.5.0":
+  version: 0.5.0
+  resolution: "@litsx/typescript-plugin@npm:0.5.0"
   dependencies:
     "@babel/parser": "npm:^7.29.3"
   peerDependencies:
     typescript: ">=5"
   bin:
     litsx-tsc: dist/litsx-tsc.js
-  checksum: 10c0/59fe09a5e1d271a13650c162c7fe161fc0fd108f0c0b7bca410b64ec5ff4d85f0359d0076425a3e732dc84362dfd9a5a81c50dbcccf3efe8f6cb624daab1363f
+  checksum: 10c0/e6b4fc4753f785fe77b882076913dd1a9251faf9536bdb2a2daf61a8d20529a9790f3453eb30fc9fe405822b259e846cea6d20c680f2293c0ccbb85d131c67e9
   languageName: node
   linkType: hard
 
@@ -4502,7 +4547,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"typescript@npm:^6.0.0":
+"typescript@npm:^6.0.3":
   version: 6.0.3
   resolution: "typescript@npm:6.0.3"
   bin:
@@ -4512,7 +4557,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"typescript@patch:typescript@npm%3A^6.0.0#optional!builtin<compat/typescript>":
+"typescript@patch:typescript@npm%3A^6.0.3#optional!builtin<compat/typescript>":
   version: 6.0.3
   resolution: "typescript@patch:typescript@npm%3A6.0.3#optional!builtin<compat/typescript>::version=6.0.3&hash=5786d5"
   bin:
@@ -4739,13 +4784,14 @@ __metadata:
   resolution: "vscode-litsx@workspace:."
   dependencies:
     "@changesets/cli": "npm:^2.31.0"
-    "@litsx/jsx-authoring": "npm:^0.3.0"
-    "@litsx/typescript-plugin": "npm:^0.4.0"
+    "@litsx/jsx-authoring": "npm:^0.3.1"
+    "@litsx/litsx": "npm:^0.3.5"
+    "@litsx/typescript-plugin": "npm:^0.5.0"
     "@rollup/plugin-commonjs": "npm:^29.0.2"
     "@rollup/plugin-node-resolve": "npm:^16.0.3"
     "@vscode/vsce": "npm:^3.9.1"
     rollup: "npm:^4.60.3"
-    typescript: "npm:^6.0.0"
+    typescript: "npm:^6.0.3"
     vitest: "npm:^4.1.6"
   languageName: unknown
   linkType: soft

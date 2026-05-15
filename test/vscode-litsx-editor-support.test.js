@@ -2,6 +2,7 @@ import assert from "assert";
 import fs from "fs";
 import os from "os";
 import path from "path";
+import { createRequire } from "module";
 import { beforeEach, describe, it } from "vitest";
 import {
   computeLitsxCompletions,
@@ -13,6 +14,8 @@ import {
   createWorkspaceTypeScriptResolver,
   getParserPlugins,
 } from "../src/editor-support.js";
+
+const require = createRequire(import.meta.url);
 
 function createCompletionKinds() {
   return {
@@ -146,7 +149,7 @@ describe("vscode-litsx editor support", () => {
     const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "litsx-vscode-public-surface-"));
     const filePath = path.join(tempDir, "component.litsx");
     const litsxPackageDir = path.join(tempDir, "node_modules", "@litsx", "litsx");
-    const workspaceLitsxPackageDir = path.resolve("/Users/rafabernad/Workspace/litsx/packages/litsx");
+    const installedLitsxPackageDir = path.resolve(require.resolve("@litsx/litsx"), "..", "..");
     const sourceText = [
       "export const Panel = () => {",
       "  useS",
@@ -170,7 +173,7 @@ describe("vscode-litsx editor support", () => {
       }),
     );
     fs.mkdirSync(path.dirname(litsxPackageDir), { recursive: true });
-    fs.symlinkSync(workspaceLitsxPackageDir, litsxPackageDir, "dir");
+    fs.symlinkSync(installedLitsxPackageDir, litsxPackageDir, "dir");
     fs.writeFileSync(filePath, sourceText);
 
     const completions = await computeLitsxProjectCompletions(
@@ -445,6 +448,10 @@ describe("vscode-litsx editor support", () => {
         include: ["*.litsx"],
       }),
     );
+    const storyLitsxPackageDir = path.join(tempDir, "node_modules", "@litsx", "litsx");
+    const installedStoryLitsxPackageDir = path.resolve(require.resolve("@litsx/litsx"), "..", "..");
+    fs.mkdirSync(path.dirname(storyLitsxPackageDir), { recursive: true });
+    fs.symlinkSync(installedStoryLitsxPackageDir, storyLitsxPackageDir, "dir");
     fs.writeFileSync(
       componentFilePath,
       [
