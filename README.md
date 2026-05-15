@@ -1,43 +1,88 @@
-# `vscode-litsx`
+# LitSX for Visual Studio Code
 
-[![Package](https://img.shields.io/badge/package-vsix-0078d7)](./package.json)
-[![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](./LICENSE)
+First-class editor support for LitSX-authored components.
 
-Official VS Code support for LitSX-authored source.
+LitSX adds native web-component authoring on top of JSX. This extension makes that syntax feel intentional inside VS Code: `.litsx` files get the right language mode, LitSX bindings are highlighted as authored syntax, and the editor surfaces project-aware diagnostics, hovers, and completions through the shared LitSX TypeScript tooling.
 
-This extension focuses on the editor layer that TypeScript plugins do not cover well on their own:
+## Features
 
-- TextMate highlighting for `@event`, `.prop`, `?attr`, and static hoists such as `static styles = ...`
-- CSS highlighting inside `static styles = \`...\``
-- workspace defaults that keep the TypeScript server aligned with LitSX
-- a light italic treatment for LitSX-specific attrs and hoists
+- Syntax highlighting for `.litsx` and `.litsx.jsx` files.
+- Highlighting for LitSX bindings: `@event`, `.property`, and `?boolean`.
+- CSS highlighting inside `static styles = \`...\`` hoists.
+- Diagnostics for invalid LitSX attributes, properties, and event bindings.
+- Hover information for LitSX bindings and static hoists.
+- Completions for intrinsic attributes, properties, boolean bindings, and events.
+- Component-aware completions for imported LitSX component props and emitted events.
+- Auto-import completions for public `@litsx/litsx` APIs such as `useState`.
+- TSX/JSX language-mode suggestions when LitSX-authored syntax is detected.
+- Workspace defaults that keep VS Code's TypeScript server aligned with LitSX projects.
 
-It is designed to complement:
-- `@litsx/typescript-plugin` for LitSX virtualization and TS-facing semantics
-- `@litsx/eslint-plugin` for lint and policy enforcement
+## Example
 
-## Grammar source contract
+```tsx
+import { useEmit, useState } from "@litsx/litsx";
 
-The checked-in TextMate grammars in `syntaxes/` are generated from the LitSX source repository.
+type CounterButtonProps = {
+  label?: string;
+};
 
-Canonical layout for local regeneration:
-- extension repo root: `vscode-litsx/`
-- LitSX source checkout: `vscode-litsx/vendor/litsx`
+export const CounterButton = ({ label = "Count" }: CounterButtonProps) => {
+  static styles = `
+    button {
+      border-radius: 8px;
+    }
+  `;
 
-If `LITSX_SOURCE_DIR` is not set, grammar generation defaults to `vendor/litsx`.
+  const emit = useEmit();
+  const [count, setCount] = useState(0);
 
-```sh
-mkdir -p vendor
-git clone https://github.com/litsxdev/litsx.git vendor/litsx
-corepack yarn install --immutable
-corepack yarn build
+  return (
+    <button
+      .value={count}
+      @click={() => {
+        setCount(count + 1);
+        emit("count-change");
+      }}
+      ?disabled={count > 10}
+    >
+      {label}: {count}
+    </button>
+  );
+};
 ```
 
-CI and release builds do not clone `litsx`. They rely on the committed grammar artifacts in `syntaxes/`, and only regenerate them when a local LitSX source checkout is available.
+In this snippet the extension highlights LitSX-specific bindings, keeps CSS readable inside `static styles`, and offers completions for bindings such as `@click`, `.value`, and `?disabled`.
 
-The `Sync Grammars` workflow clones `litsxdev/litsx`, regenerates `syntaxes/`, and opens a pull request when the generated grammars change.
+## Project Setup
 
-## Release pipeline
+For the strongest TypeScript experience, install the LitSX TypeScript plugin in your project and enable the workspace TypeScript version:
 
-- `Validate Extension` installs dependencies, runs tests, builds, and packages the VSIX without cloning the LitSX monorepo.
-- `Release` versions the extension from pending changesets, publishes it to the VS Code Marketplace, pushes the `v<version>` tag, and creates a GitHub Release with the packaged VSIX attached.
+```json
+{
+  "compilerOptions": {
+    "jsx": "react-jsx",
+    "jsxImportSource": "@litsx/litsx",
+    "plugins": [{ "name": "@litsx/typescript-plugin" }]
+  }
+}
+```
+
+Generated LitSX projects already include the recommended VS Code settings and extension recommendation.
+
+## Commands
+
+- `LitSX: Switch Current File to LitSX Mode`
+- `LitSX: Reset Current File to Standard Language Mode`
+- `LitSX: Dump Current File Diagnostics`
+
+## Settings
+
+- `litsx.autoSuggestLanguageMode`: suggest LitSX language mode for TSX/JSX files that contain LitSX-authored syntax.
+- `litsx.traceDiagnostics`: log LitSX diagnostic refreshes to the `LitSX` output channel.
+
+## Related Packages
+
+- `@litsx/litsx`: runtime primitives and JSX runtime.
+- `@litsx/typescript-plugin`: TypeScript virtualization, diagnostics, hover, and completions.
+- `@litsx/eslint-plugin`: lint rules for LitSX projects.
+- `prettier-plugin-litsx`: formatting support for LitSX-authored files.
