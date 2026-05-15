@@ -32,8 +32,8 @@
   },
   "scripts": {
     "build": "node ./scripts/build-grammars.mjs && rollup --config rollup.config.mjs && node ./scripts/sync-typescript-libs.mjs",
-    "package:vsix": "yarn build && node -e \"require('node:fs').rmSync('dist/vscode-litsx.vsix', { force: true })\" && vsce package --no-dependencies --out dist/vscode-litsx.vsix",
-    "package:vsix:pre-release": "yarn build && node -e \"require('node:fs').rmSync('dist/vscode-litsx.vsix', { force: true })\" && vsce package --no-dependencies --pre-release --out dist/vscode-litsx.vsix",
+    "package:vsix": "yarn build && node -e \"const fs = require('node:fs'); fs.rmSync('dist/.DS_Store', { force: true }); fs.rmSync('dist/vscode-litsx.vsix', { force: true })\" && vsce package --no-dependencies --out dist/vscode-litsx.vsix",
+    "package:vsix:pre-release": "yarn build && node -e \"const fs = require('node:fs'); fs.rmSync('dist/.DS_Store', { force: true }); fs.rmSync('dist/vscode-litsx.vsix', { force: true })\" && vsce package --no-dependencies --pre-release --out dist/vscode-litsx.vsix",
     "test": "vitest run test/*.test.js",
     "changeset": "changeset",
     "changeset:status": "changeset status",
@@ -59,6 +59,7 @@
     "@rollup/plugin-commonjs": "^29.0.2",
     "@rollup/plugin-node-resolve": "^16.0.3",
     "@vscode/vsce": "^3.9.1",
+    "lit": "^3.3.3",
     "rollup": "^4.60.3",
     "vitest": "^4.1.6"
   },
