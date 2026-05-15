@@ -50,7 +50,7 @@
   ],
   "dependencies": {
     "@litsx/jsx-authoring": "^0.3.0",
-    "@litsx/typescript-plugin": "^0.3.0",
+    "@litsx/typescript-plugin": "^0.4.0",
     "typescript": "^6.0.0"
   },
   "devDependencies": {
@@ -93,7 +93,7 @@
     },
     "configurationDefaults": {
       "js/ts.tsdk.path": "node_modules/typescript/lib",
-      "typescript.tsserver.useSeparateSyntaxServer": false,
+      "typescript.tsserver.useSyntaxServer": "never",
       "editor.tokenColorCustomizations": {
         "textMateRules": [
           {

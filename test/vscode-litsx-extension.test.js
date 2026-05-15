@@ -136,6 +136,16 @@ function createVscodeMock({
   };
 
   const vscode = {
+    Uri: {
+      file(fsPath) {
+        return {
+          fsPath,
+          toString() {
+            return `file://${fsPath}`;
+          },
+        };
+      },
+    },
     Range,
     Diagnostic,
     CompletionItem,
@@ -189,6 +199,10 @@ function createVscodeMock({
     },
     workspace: {
       textDocuments: documents,
+      workspaceFolders: [],
+      getWorkspaceFolder() {
+        return null;
+      },
       getConfiguration(section) {
         return {
           get(key, fallbackValue) {
@@ -254,7 +268,18 @@ async function flushAsyncWork() {
 async function loadExtension({ vscodeMock, editorSupportMock }) {
   vi.resetModules();
   vi.doMock("vscode", () => vscodeMock.vscode);
-  vi.doMock("../src/editor-support.js", () => editorSupportMock);
+  vi.doMock("../src/editor-support.js", () => ({
+    configureEditorSupport() {},
+    createWorkspaceTypeScriptResolver() {
+      return async () => ({
+        typescript: { version: "mock-ts" },
+        source: "workspace",
+        modulePath: "workspace:mock-ts",
+        bundledLibDir: null,
+      });
+    },
+    ...editorSupportMock,
+  }));
 
   try {
     return await import("../src/extension.js");

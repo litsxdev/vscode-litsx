@@ -64,8 +64,8 @@ describe("vscode-litsx", () => {
       false,
     );
     assert.strictEqual(
-      manifest.contributes.configurationDefaults["typescript.tsserver.useSeparateSyntaxServer"],
-      false,
+      manifest.contributes.configurationDefaults["typescript.tsserver.useSyntaxServer"],
+      "never",
     );
     const tokenColorRules =
       manifest.contributes.configurationDefaults["editor.tokenColorCustomizations"].textMateRules;

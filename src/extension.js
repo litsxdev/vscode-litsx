@@ -12,11 +12,19 @@ import {
   computeLitsxProjectCompletions,
   computeLitsxProjectDiagnostics,
   computeLitsxProjectHover,
+  configureEditorSupport,
+  createWorkspaceTypeScriptResolver,
 } from "./editor-support.js";
 
 const LANGUAGE_SELECTIONS_KEY = "litsx.languageSelections";
 const DISMISSED_SIGNATURES_KEY = "litsx.dismissedSignatures";
 const RECENT_CLOSE_WINDOW_MS = 1500;
+const COMPLETION_TRIGGER_CHARACTERS = [
+  "@",
+  ".",
+  "?",
+  ..."_abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ".split(""),
+];
 
 function activate(context) {
   const diagnostics = vscode.languages.createDiagnosticCollection("litsx");
@@ -147,6 +155,12 @@ function activate(context) {
   function isTraceDiagnosticsEnabled() {
     return vscode.workspace.getConfiguration("litsx").get("traceDiagnostics", false);
   }
+
+  configureEditorSupport({
+    resolveTypeScript: createWorkspaceTypeScriptResolver(vscode),
+    logger: output,
+    traceEnabled: isTraceDiagnosticsEnabled,
+  });
 
   function formatDiagnosticMessage(messageText, indent = "") {
     if (typeof messageText === "string") {
@@ -288,11 +302,23 @@ function activate(context) {
       const item = new vscode.CompletionItem(entry.label, entry.kind);
       item.detail = entry.detail;
       item.documentation = entry.documentation;
-      item.insertText = entry.label;
+      item.insertText = entry.insertText ?? entry.label;
+      item.filterText = entry.filterText ?? entry.label;
       item.range = new vscode.Range(
         document.positionAt(entry.start),
         document.positionAt(entry.start + entry.length),
       );
+      if (Array.isArray(entry.additionalTextEdits) && entry.additionalTextEdits.length > 0) {
+        item.additionalTextEdits = entry.additionalTextEdits.map((edit) => (
+          new vscode.TextEdit(
+            new vscode.Range(
+              document.positionAt(edit.start),
+              document.positionAt(edit.start + edit.length),
+            ),
+            edit.newText,
+          )
+        ));
+      }
       return item;
     });
   }
@@ -508,9 +534,7 @@ function activate(context) {
           return provideCompletions(document, position);
         },
       },
-      "@",
-      ".",
-      "?",
+      ...COMPLETION_TRIGGER_CHARACTERS,
     ),
     diagnostics,
     output,

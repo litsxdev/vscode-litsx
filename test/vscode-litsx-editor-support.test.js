@@ -2,13 +2,15 @@ import assert from "assert";
 import fs from "fs";
 import os from "os";
 import path from "path";
-import { describe, it } from "vitest";
+import { beforeEach, describe, it } from "vitest";
 import {
   computeLitsxCompletions,
   computeLitsxHover,
   computeLitsxProjectCompletions,
   computeLitsxProjectDiagnostics,
   computeLitsxProjectHover,
+  configureEditorSupport,
+  createWorkspaceTypeScriptResolver,
   getParserPlugins,
 } from "../src/editor-support.js";
 
@@ -29,6 +31,14 @@ function createCompletionKinds() {
 }
 
 describe("vscode-litsx editor support", () => {
+  beforeEach(() => {
+    configureEditorSupport({
+      resolveTypeScript: null,
+      logger: null,
+      traceEnabled: null,
+    });
+  });
+
   it("returns null hover and empty completions when the cursor is outside LitSX syntax", async () => {
     const sourceText = "const value = count + 1;";
 
@@ -69,6 +79,9 @@ describe("vscode-litsx editor support", () => {
     assert.match(hover.code, /\.val: property/);
     assert.match(hover.documentation, /property binding/);
     assert.ok(completions.some((entry) => entry.label === ".value" && entry.kind === 10));
+    const valueCompletion = completions.find((entry) => entry.label === ".value");
+    assert.strictEqual(valueCompletion.insertText, "value");
+    assert.strictEqual(valueCompletion.filterText, "value");
   });
 
   it("supports standalone .litsx.jsx diagnostics, hover, and completions without a tsconfig", async () => {
@@ -128,6 +141,52 @@ describe("vscode-litsx editor support", () => {
     assert.match(hover.code, /styles/);
     assert.ok(completions.some((entry) => entry.label === "count"));
   });
+
+  it("surfaces public @litsx/litsx auto-import completions inside .litsx bodies", async () => {
+    const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "litsx-vscode-public-surface-"));
+    const filePath = path.join(tempDir, "component.litsx");
+    const litsxPackageDir = path.join(tempDir, "node_modules", "@litsx", "litsx");
+    const workspaceLitsxPackageDir = path.resolve("/Users/rafabernad/Workspace/litsx/packages/litsx");
+    const sourceText = [
+      "export const Panel = () => {",
+      "  useS",
+      "  return <button />;",
+      "};",
+      "",
+    ].join("\n");
+
+    fs.writeFileSync(
+      path.join(tempDir, "tsconfig.json"),
+      JSON.stringify({
+        compilerOptions: {
+          jsx: "react-jsx",
+          jsxImportSource: "@litsx/litsx",
+          target: "ES2022",
+          module: "ESNext",
+          moduleResolution: "Bundler",
+          allowArbitraryExtensions: true,
+        },
+        include: ["component.litsx"],
+      }),
+    );
+    fs.mkdirSync(path.dirname(litsxPackageDir), { recursive: true });
+    fs.symlinkSync(workspaceLitsxPackageDir, litsxPackageDir, "dir");
+    fs.writeFileSync(filePath, sourceText);
+
+    const completions = await computeLitsxProjectCompletions(
+      filePath,
+      sourceText,
+      "litsx",
+      sourceText.indexOf("useS") + "useS".length,
+      createCompletionKinds(),
+    );
+
+    assert.ok(completions.some((entry) => entry.label === "useState"));
+    const useStateCompletion = completions.find((entry) => entry.label === "useState");
+    assert.ok(useStateCompletion.additionalTextEdits?.some((edit) => (
+      edit.newText.includes('import { useState } from "@litsx/litsx";')
+    )));
+  }, 15000);
 
   it("filters virtual TypeScript noise while preserving real project diagnostics", async () => {
     const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "litsx-vscode-filter-"));
@@ -367,5 +426,123 @@ describe("vscode-litsx editor support", () => {
 
     assert.ok(diagnostics.some((diagnostic) => diagnostic.code === 91004));
     assert.ok(diagnostics.some((diagnostic) => diagnostic.code === 91006));
+  }, 15000);
+
+  it("suppresses customElements.define false positives for imported .litsx story components", async () => {
+    const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "litsx-vscode-storybook-"));
+    const storyFilePath = path.join(tempDir, "button.stories.litsx");
+    const componentFilePath = path.join(tempDir, "button.litsx");
+
+    fs.writeFileSync(
+      path.join(tempDir, "tsconfig.json"),
+      JSON.stringify({
+        compilerOptions: {
+          jsx: "react-jsx",
+          jsxImportSource: "@litsx/litsx",
+          target: "ES2022",
+          module: "ESNext",
+        },
+        include: ["*.litsx"],
+      }),
+    );
+    fs.writeFileSync(
+      componentFilePath,
+      [
+        "export const LitsxButton = ({ label = '' } = {}) => {",
+        "  return <button>{label}</button>;",
+        "};",
+        "",
+      ].join("\n"),
+    );
+    const storySource = [
+      'import { LitsxButton } from "./button.litsx";',
+      "",
+      'if (!customElements.get("litsx-button")) {',
+      '  customElements.define("litsx-button", LitsxButton);',
+      "}",
+      "",
+    ].join("\n");
+    fs.writeFileSync(storyFilePath, storySource);
+
+    const diagnostics = await computeLitsxProjectDiagnostics(storyFilePath, storySource, "litsx");
+
+    assert.ok(!diagnostics.some((diagnostic) => diagnostic.code === 2345));
+  }, 15000);
+
+  it("prefers workspace TypeScript when a workspace module is available", async () => {
+    const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "litsx-vscode-workspace-ts-"));
+    const filePath = path.join(tempDir, "component.litsx");
+    const workspaceTsDir = path.join(tempDir, "node_modules", "typescript", "lib");
+    const workspaceTsFile = path.join(workspaceTsDir, "typescript.js");
+
+    fs.mkdirSync(workspaceTsDir, { recursive: true });
+    fs.writeFileSync(workspaceTsFile, "module.exports = { version: 'workspace-ts-test' };");
+    fs.writeFileSync(filePath, "const view = <button />;\n");
+
+    const resolver = createWorkspaceTypeScriptResolver({
+      Uri: {
+        file(fsPath) {
+          return { fsPath };
+        },
+      },
+      workspace: {
+        workspaceFolders: [
+          {
+            uri: {
+              fsPath: tempDir,
+            },
+          },
+        ],
+        getConfiguration() {
+          return {
+            get(_key, fallbackValue) {
+              return fallbackValue;
+            },
+          };
+        },
+      },
+    });
+
+    const resolution = await resolver(filePath);
+
+    assert.strictEqual(resolution.source, "workspace");
+    assert.strictEqual(resolution.typescript.version, "workspace-ts-test");
+    assert.strictEqual(resolution.bundledLibDir, workspaceTsDir);
+  });
+
+  it("logs fallback TypeScript resolution when trace is enabled", async () => {
+    const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "litsx-vscode-fallback-log-"));
+    const filePath = path.join(tempDir, "component.litsx");
+    const sourceText = [
+      "const count = 1;",
+      "const view = <button>{count}</button>;",
+      "",
+    ].join("\n");
+    const outputLines = [];
+
+    fs.writeFileSync(filePath, sourceText);
+
+    configureEditorSupport({
+      async resolveTypeScript() {
+        return {
+          typescript: (await import("typescript")).default,
+          source: "fallback",
+          modulePath: "fallback:typescript",
+          bundledLibDir: null,
+        };
+      },
+      logger: {
+        appendLine(line) {
+          outputLines.push(line);
+        },
+      },
+      traceEnabled() {
+        return true;
+      },
+    });
+
+    await computeLitsxProjectDiagnostics(filePath, sourceText, "litsx");
+
+    assert.ok(outputLines.some((line) => line.includes("source=fallback")));
   }, 15000);
 });
