@@ -35,6 +35,8 @@ corepack yarn build
 
 CI and release builds do not clone `litsx`. They rely on the committed grammar artifacts in `syntaxes/`, and only regenerate them when a local LitSX source checkout is available.
 
+The `Sync Grammars` workflow clones `litsxdev/litsx`, regenerates `syntaxes/`, and opens a pull request when the generated grammars change.
+
 ## Release pipeline
 
 - `Validate Extension` installs dependencies, runs tests, builds, and packages the VSIX without cloning the LitSX monorepo.

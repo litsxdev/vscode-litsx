@@ -1,0 +1,83 @@
+name: Sync Grammars
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "17 6 * * 1"
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: sync-grammars
+  cancel-in-progress: true
+
+jobs:
+  sync:
+    name: Sync TextMate Grammars
+    runs-on: ubuntu-latest
+    env:
+      LITSX_SOURCE_DIR: vendor/litsx
+    steps:
+      - name: Create release app token
+        id: app-token
+        uses: actions/create-github-app-token@v3
+        with:
+          client-id: ${{ vars.LITSX_APP_CLIENT_ID }}
+          private-key: ${{ secrets.LITSX_APP_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+          permission-contents: write
+          permission-pull-requests: write
+
+      - name: Checkout extension repository
+        uses: actions/checkout@v6
+        with:
+          token: ${{ steps.app-token.outputs.token }}
+
+      - name: Checkout LitSX source repository
+        uses: actions/checkout@v6
+        with:
+          repository: litsxdev/litsx
+          path: vendor/litsx
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 20
+          package-manager-cache: false
+
+      - name: Enable Yarn
+        run: |
+          corepack enable
+          corepack prepare yarn@4.10.3 --activate
+
+      - name: Cache Yarn state
+        uses: actions/cache@v5
+        with:
+          path: |
+            .yarn/install-state.gz
+            .yarn-cache
+          key: ${{ runner.os }}-yarn4-${{ hashFiles('yarn.lock', 'package.json', '.yarnrc.yml') }}
+          restore-keys: |
+            ${{ runner.os }}-yarn4-
+
+      - name: Install dependencies
+        run: corepack yarn install --immutable
+
+      - name: Regenerate grammars
+        run: node scripts/build-grammars.mjs
+
+      - name: Open grammar sync pull request
+        uses: peter-evans/create-pull-request@v7
+        with:
+          token: ${{ steps.app-token.outputs.token }}
+          branch: automation/sync-grammars
+          delete-branch: true
+          commit-message: "Update generated LitSX grammars"
+          title: "Update generated LitSX grammars"
+          body: "Regenerates the checked-in TextMate grammars from the latest `litsxdev/litsx` source."
+          labels: automation,grammars
+          add-paths: |
+            syntaxes/litsx-jsx.tmLanguage.json
+            syntaxes/litsx.tmLanguage.json
