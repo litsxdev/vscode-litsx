@@ -126,8 +126,6 @@ jobs:
       id-token: write
       attestations: write
       artifact-metadata: write
-    env:
-      LITSX_SOURCE_DIR: vendor/litsx
     steps:
       - name: Create release app token
         id: app-token
@@ -145,12 +143,6 @@ jobs:
           fetch-depth: 0
           token: ${{ steps.app-token.outputs.token }}
           persist-credentials: false
-
-      - name: Checkout LitSX source repository
-        uses: actions/checkout@v6
-        with:
-          repository: litsxdev/litsx
-          path: vendor/litsx
 
       - name: Setup Node.js
         uses: actions/setup-node@v6
@@ -233,3 +225,20 @@ jobs:
 
       - name: Push release tag
         run: git push origin --tags
+
+      - name: Read release metadata
+        id: release_meta
+        run: |
+          echo "tag=v$(node -p "require('./package.json').version")" >> "$GITHUB_OUTPUT"
+          echo "version=$(node -p "require('./package.json').version")" >> "$GITHUB_OUTPUT"
+
+      - name: Create GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.release_meta.outputs.tag }}
+          name: ${{ steps.release_meta.outputs.tag }}
+          files: dist/*.vsix
+          generate_release_notes: true
+          prerelease: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.pre_release == 'true' }}
+        env:
+          GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}

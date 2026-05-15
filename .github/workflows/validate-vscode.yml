@@ -17,17 +17,9 @@ jobs:
   validate:
     name: Validate Extension
     runs-on: ubuntu-latest
-    env:
-      LITSX_SOURCE_DIR: vendor/litsx
     steps:
       - name: Checkout extension repository
         uses: actions/checkout@v6
-
-      - name: Checkout LitSX source repository
-        uses: actions/checkout@v6
-        with:
-          repository: litsxdev/litsx
-          path: vendor/litsx
 
       - name: Setup Node.js
         uses: actions/setup-node@v6
