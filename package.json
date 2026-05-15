@@ -2,7 +2,7 @@
   "name": "vscode-litsx",
   "displayName": "LitSX",
   "description": "VS Code syntax highlighting and workspace defaults for LitSX-authored .litsx and .litsx.jsx files.",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "publisher": "litsx",
   "license": "Apache-2.0",
   "icon": "icon.png",
