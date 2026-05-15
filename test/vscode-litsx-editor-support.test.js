@@ -145,11 +145,11 @@ describe("vscode-litsx editor support", () => {
     assert.ok(completions.some((entry) => entry.label === "count"));
   });
 
-  it("surfaces public @litsx/litsx auto-import completions inside .litsx bodies", async () => {
+  it("surfaces public @litsx/core auto-import completions inside .litsx bodies", async () => {
     const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "litsx-vscode-public-surface-"));
     const filePath = path.join(tempDir, "component.litsx");
-    const litsxPackageDir = path.join(tempDir, "node_modules", "@litsx", "litsx");
-    const installedLitsxPackageDir = path.resolve(require.resolve("@litsx/litsx"), "..", "..");
+    const litsxPackageDir = path.join(tempDir, "node_modules", "@litsx", "core");
+    const installedLitsxPackageDir = path.resolve(require.resolve("@litsx/core"), "..", "..");
     const sourceText = [
       "export const Panel = () => {",
       "  useS",
@@ -163,7 +163,7 @@ describe("vscode-litsx editor support", () => {
       JSON.stringify({
         compilerOptions: {
           jsx: "react-jsx",
-          jsxImportSource: "@litsx/litsx",
+          jsxImportSource: "@litsx/core",
           target: "ES2022",
           module: "ESNext",
           moduleResolution: "Bundler",
@@ -187,7 +187,7 @@ describe("vscode-litsx editor support", () => {
     assert.ok(completions.some((entry) => entry.label === "useState"));
     const useStateCompletion = completions.find((entry) => entry.label === "useState");
     assert.ok(useStateCompletion.additionalTextEdits?.some((edit) => (
-      edit.newText.includes('import { useState } from "@litsx/litsx";')
+      edit.newText.includes('import { useState } from "@litsx/core";')
     )));
   }, 15000);
 
@@ -195,7 +195,7 @@ describe("vscode-litsx editor support", () => {
     const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "litsx-vscode-filter-"));
     const filePath = path.join(tempDir, "component.litsx");
     const sourceText = [
-      'import { useState } from "@litsx/litsx";',
+      'import { useState } from "@litsx/core";',
       "export const Component = () => {",
       "  const [count] = useState(0);",
       "  return <input .valuee={count} @clcik={() => count.toFixed()} />;",
@@ -208,7 +208,7 @@ describe("vscode-litsx editor support", () => {
       JSON.stringify({
         compilerOptions: {
           jsx: "react-jsx",
-          jsxImportSource: "@litsx/litsx",
+          jsxImportSource: "@litsx/core",
           target: "ES2022",
           module: "ESNext",
         },
@@ -441,15 +441,15 @@ describe("vscode-litsx editor support", () => {
       JSON.stringify({
         compilerOptions: {
           jsx: "react-jsx",
-          jsxImportSource: "@litsx/litsx",
+          jsxImportSource: "@litsx/core",
           target: "ES2022",
           module: "ESNext",
         },
         include: ["*.litsx"],
       }),
     );
-    const storyLitsxPackageDir = path.join(tempDir, "node_modules", "@litsx", "litsx");
-    const installedStoryLitsxPackageDir = path.resolve(require.resolve("@litsx/litsx"), "..", "..");
+    const storyLitsxPackageDir = path.join(tempDir, "node_modules", "@litsx", "core");
+    const installedStoryLitsxPackageDir = path.resolve(require.resolve("@litsx/core"), "..", "..");
     fs.mkdirSync(path.dirname(storyLitsxPackageDir), { recursive: true });
     fs.symlinkSync(installedStoryLitsxPackageDir, storyLitsxPackageDir, "dir");
     fs.writeFileSync(

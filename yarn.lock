@@ -514,7 +514,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@lit/reactive-element@npm:^1.6.2 || ^2.1.0, @lit/reactive-element@npm:^2.1.2":
+"@lit/reactive-element@npm:^1.6.2 || ^2.1.0, @lit/reactive-element@npm:^2.1.0, @lit/reactive-element@npm:^2.1.2":
   version: 2.1.2
   resolution: "@lit/reactive-element@npm:2.1.2"
   dependencies:
@@ -523,12 +523,25 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@litsx/jsx-authoring@npm:^0.3.1":
-  version: 0.3.1
-  resolution: "@litsx/jsx-authoring@npm:0.3.1"
+"@litsx/authoring@npm:^0.4.0":
+  version: 0.4.0
+  resolution: "@litsx/authoring@npm:0.4.0"
   dependencies:
     magic-string: "npm:^0.30.21"
-  checksum: 10c0/37a5914e64d8d3a60e270ead1f1378d072b77603480945feef925088158093662781a70b69d7ce549f62be6233471377ad7227da6b66dd49cbf1e85f920f6b9d
+  checksum: 10c0/1f72c78c7a4c17634e140d932984c038724205a26cdfea09e476f75e0dbda8df4b1c25452b915ea232c5a88ee5eaeef349be29872952bab56e9bbb4e9385959f
+  languageName: node
+  linkType: hard
+
+"@litsx/core@npm:^0.4.0":
+  version: 0.4.0
+  resolution: "@litsx/core@npm:0.4.0"
+  dependencies:
+    "@lit/context": "npm:^1.1.6"
+    "@lit/reactive-element": "npm:^2.1.2"
+    "@litsx/light-dom-registry": "npm:^0.2.4"
+  peerDependencies:
+    lit: ">=3"
+  checksum: 10c0/9012b0ffc7a2a43995f1c47bfbb520163f2f304a70e9914455a8ed2b07692e737ea6c3003f352c2adb0d5817419dd7c6d8ad665ed1fa0ed94f204ef3de53a210
   languageName: node
   linkType: hard
 
@@ -539,29 +552,16 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@litsx/litsx@npm:^0.3.5":
-  version: 0.3.5
-  resolution: "@litsx/litsx@npm:0.3.5"
-  dependencies:
-    "@lit/context": "npm:^1.1.6"
-    "@lit/reactive-element": "npm:^2.1.2"
-    "@litsx/light-dom-registry": "npm:^0.2.4"
-  peerDependencies:
-    lit: ">=3"
-  checksum: 10c0/9c0bb4df6cc54fba9669d51d370e4c25e31c1c0d307cfeece1bd1615984d3acb4e28899663dc931d3ca65f33817c2f3d80dadd50f97ceeb5ef733b49e94857a7
-  languageName: node
-  linkType: hard
-
-"@litsx/typescript-plugin@npm:^0.5.0":
-  version: 0.5.0
-  resolution: "@litsx/typescript-plugin@npm:0.5.0"
+"@litsx/typescript@npm:^0.6.0":
+  version: 0.6.0
+  resolution: "@litsx/typescript@npm:0.6.0"
   dependencies:
     "@babel/parser": "npm:^7.29.3"
   peerDependencies:
     typescript: ">=5"
   bin:
     litsx-tsc: dist/litsx-tsc.js
-  checksum: 10c0/e6b4fc4753f785fe77b882076913dd1a9251faf9536bdb2a2daf61a8d20529a9790f3453eb30fc9fe405822b259e846cea6d20c680f2293c0ccbb85d131c67e9
+  checksum: 10c0/e8361c34ba469787f42aad6369c35e9101a7319ebdfe55dacad3f1d2b6ad97bf5763470a262e96f8c153b82731fb98dbe8efaf0bcd76e4f3e806842deec76b97
   languageName: node
   linkType: hard
 
@@ -1232,6 +1232,13 @@ __metadata:
   version: 2.1.7
   resolution: "@types/sarif@npm:2.1.7"
   checksum: 10c0/983d593735c42b288c3d95bb1655b036652438d267eecb2cd5d0f8c613ac98ae198eb7828dc171776e64a6ebe93e88c920ec9b80cf3c780e015e081ac5d26c01
+  languageName: node
+  linkType: hard
+
+"@types/trusted-types@npm:^2.0.2":
+  version: 2.0.7
+  resolution: "@types/trusted-types@npm:2.0.7"
+  checksum: 10c0/4c4855f10de7c6c135e0d32ce462419d8abbbc33713b31d294596c0cc34ae1fa6112a2f9da729c8f7a20707782b0d69da3b1f8df6645b0366d08825ca1522e0c
   languageName: node
   linkType: hard
 
@@ -3057,6 +3064,37 @@ __metadata:
   languageName: node
   linkType: hard
 
+"lit-element@npm:^4.2.0":
+  version: 4.2.2
+  resolution: "lit-element@npm:4.2.2"
+  dependencies:
+    "@lit-labs/ssr-dom-shim": "npm:^1.5.0"
+    "@lit/reactive-element": "npm:^2.1.0"
+    lit-html: "npm:^3.3.0"
+  checksum: 10c0/114ab5837f1f9e03a30b1ed1c055fa0e31f01e444464e5ab0453ef88be12d778508235533267c42614d323e3048ee58f865b5c612948a53bd6219abca404c710
+  languageName: node
+  linkType: hard
+
+"lit-html@npm:^3.3.0":
+  version: 3.3.3
+  resolution: "lit-html@npm:3.3.3"
+  dependencies:
+    "@types/trusted-types": "npm:^2.0.2"
+  checksum: 10c0/84e57314412ff385cc67fc482d26b77057370e2cfe3c6495cc45f692bdad840d5ed0519ddddcfae1d043bb098c66daa7e807593d5a21ac72094da14274497879
+  languageName: node
+  linkType: hard
+
+"lit@npm:^3.3.3":
+  version: 3.3.3
+  resolution: "lit@npm:3.3.3"
+  dependencies:
+    "@lit/reactive-element": "npm:^2.1.0"
+    lit-element: "npm:^4.2.0"
+    lit-html: "npm:^3.3.0"
+  checksum: 10c0/11b6175ebffce92f4cf835ddd8a198d49707c27f34b0a7c538d2cb294f6c2fb7ff40aabd3589fcf0c2ed162404faaf2bb7c966fad9024bb9e02d013e2d5aa0b5
+  languageName: node
+  linkType: hard
+
 "locate-path@npm:^5.0.0":
   version: 5.0.0
   resolution: "locate-path@npm:5.0.0"
@@ -4784,12 +4822,13 @@ __metadata:
   resolution: "vscode-litsx@workspace:."
   dependencies:
     "@changesets/cli": "npm:^2.31.0"
-    "@litsx/jsx-authoring": "npm:^0.3.1"
-    "@litsx/litsx": "npm:^0.3.5"
-    "@litsx/typescript-plugin": "npm:^0.5.0"
+    "@litsx/authoring": "npm:^0.4.0"
+    "@litsx/core": "npm:^0.4.0"
+    "@litsx/typescript": "npm:^0.6.0"
     "@rollup/plugin-commonjs": "npm:^29.0.2"
     "@rollup/plugin-node-resolve": "npm:^16.0.3"
     "@vscode/vsce": "npm:^3.9.1"
+    lit: "npm:^3.3.3"
     rollup: "npm:^4.60.3"
     typescript: "npm:^6.0.3"
     vitest: "npm:^4.1.6"

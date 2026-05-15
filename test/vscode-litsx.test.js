@@ -250,7 +250,7 @@ describe("vscode-litsx", () => {
     const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "litsx-vscode-"));
     const filePath = path.join(tempDir, "component.litsx");
     const sourceText = [
-      'import { useState } from "@litsx/litsx";',
+      'import { useState } from "@litsx/core";',
       "export const X = () => {",
       "  const [count] = useState(0);",
       "  return <input .valuee={count} @focus={()=>{}} />;",
@@ -263,7 +263,7 @@ describe("vscode-litsx", () => {
       JSON.stringify({
         compilerOptions: {
           jsx: "react-jsx",
-          jsxImportSource: "@litsx/litsx",
+          jsxImportSource: "@litsx/core",
           target: "ES2022",
           module: "ESNext",
         },
