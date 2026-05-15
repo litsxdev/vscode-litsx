@@ -507,16 +507,16 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@litsx/typescript-plugin@npm:^0.3.0":
-  version: 0.3.0
-  resolution: "@litsx/typescript-plugin@npm:0.3.0"
+"@litsx/typescript-plugin@npm:^0.4.0":
+  version: 0.4.0
+  resolution: "@litsx/typescript-plugin@npm:0.4.0"
   dependencies:
     "@babel/parser": "npm:^7.29.3"
   peerDependencies:
     typescript: ">=5"
   bin:
     litsx-tsc: dist/litsx-tsc.js
-  checksum: 10c0/c2bc9fa1264446615336e5d584a8bf714c46a40e2e12dff81ba3d88197e967526ccf54aeb0ff4b0d795d3125fe9566ac79260876372718e92d952b3f47041c33
+  checksum: 10c0/59fe09a5e1d271a13650c162c7fe161fc0fd108f0c0b7bca410b64ec5ff4d85f0359d0076425a3e732dc84362dfd9a5a81c50dbcccf3efe8f6cb624daab1363f
   languageName: node
   linkType: hard
 
@@ -4740,7 +4740,7 @@ __metadata:
   dependencies:
     "@changesets/cli": "npm:^2.31.0"
     "@litsx/jsx-authoring": "npm:^0.3.0"
-    "@litsx/typescript-plugin": "npm:^0.3.0"
+    "@litsx/typescript-plugin": "npm:^0.4.0"
     "@rollup/plugin-commonjs": "npm:^29.0.2"
     "@rollup/plugin-node-resolve": "npm:^16.0.3"
     "@vscode/vsce": "npm:^3.9.1"
