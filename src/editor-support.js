@@ -10,8 +10,8 @@ import {
   inferLitsxAttributeCompletionContext,
   inferLitsxAttributeInfoAtPosition,
   inferLitsxStaticHoistInfoAtPosition,
-} from "@litsx/typescript-plugin/virtual-source";
-import { createLitsxEditorSession } from "@litsx/typescript-plugin/editor-session";
+} from "@litsx/typescript/virtualization";
+import { createLitsxEditorSession } from "@litsx/typescript/editor-session";
 
 const MODULE_DIR = path.dirname(fileURLToPath(import.meta.url));
 const require = createRequire(import.meta.url);

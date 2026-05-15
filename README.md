@@ -13,14 +13,14 @@ LitSX adds native web-component authoring on top of JSX. This extension makes th
 - Hover information for LitSX bindings and static hoists.
 - Completions for intrinsic attributes, properties, boolean bindings, and events.
 - Component-aware completions for imported LitSX component props and emitted events.
-- Auto-import completions for public `@litsx/litsx` APIs such as `useState`.
+- Auto-import completions for public `@litsx/core` APIs such as `useState`.
 - TSX/JSX language-mode suggestions when LitSX-authored syntax is detected.
 - Workspace defaults that keep VS Code's TypeScript server aligned with LitSX projects.
 
 ## Example
 
 ```tsx
-import { useEmit, useState } from "@litsx/litsx";
+import { useEmit, useState } from "@litsx/core";
 
 type CounterButtonProps = {
   label?: string;
@@ -61,13 +61,13 @@ For the strongest TypeScript experience, install the LitSX TypeScript plugin in 
 {
   "compilerOptions": {
     "jsx": "react-jsx",
-    "jsxImportSource": "@litsx/litsx",
-    "plugins": [{ "name": "@litsx/typescript-plugin" }]
+    "jsxImportSource": "@litsx/core",
+    "plugins": [{ "name": "@litsx/typescript" }]
   }
 }
 ```
 
-Generated LitSX projects already include the recommended VS Code settings and extension recommendation.
+If you are starting from scratch, [`create-litsx-app`](https://www.npmjs.com/package/create-litsx-app) can scaffold a LitSX project with the recommended VS Code settings and extension recommendation already in place.
 
 ## Commands
 
@@ -82,7 +82,7 @@ Generated LitSX projects already include the recommended VS Code settings and ex
 
 ## Related Packages
 
-- `@litsx/litsx`: runtime primitives and JSX runtime.
-- `@litsx/typescript-plugin`: TypeScript virtualization, diagnostics, hover, and completions.
+- `@litsx/core`: runtime primitives and JSX runtime.
+- `@litsx/typescript`: TypeScript virtualization, diagnostics, hover, and completions.
 - `@litsx/eslint-plugin`: lint rules for LitSX projects.
 - `prettier-plugin-litsx`: formatting support for LitSX-authored files.
