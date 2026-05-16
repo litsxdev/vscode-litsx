@@ -109,8 +109,8 @@ function createVscodeMock({
   }
 
   class MarkdownString {
-    constructor() {
-      this.value = "";
+    constructor(value = "") {
+      this.value = value;
     }
 
     appendCodeblock(code, language) {
@@ -464,6 +464,7 @@ describe("vscode-litsx extension activation", () => {
           length: "@click".length,
           code: "@click: event",
           documentation: "LitSX event listener binding for <button>.",
+          markdown: "```tsx\n@click: event\n```\n\nLitSX event listener binding for <button>.",
         };
       },
     };
@@ -484,7 +485,8 @@ describe("vscode-litsx extension activation", () => {
 
     const hoverProvider = vscodeMock.hoverProviders[0].provider;
     const hover = await hoverProvider.provideHover(document, document.positionAt(document.getText().indexOf("@click")));
-    assert.strictEqual(hover.contents[1], "LitSX event listener binding for <button>.");
+    assert.strictEqual(hover.contents.length, 1);
+    assert.strictEqual(hover.contents[0].value, "```tsx\n@click: event\n```\n\nLitSX event listener binding for <button>.");
 
     const completionProvider = vscodeMock.completionProviders[0].provider;
     const completions = await completionProvider.provideCompletionItems(
@@ -532,6 +534,7 @@ describe("vscode-litsx extension activation", () => {
           length: "?disabled".length,
           code: "?disabled: boolean",
           documentation: "LitSX boolean attribute binding for <button>.",
+          markdown: "```jsx\n?disabled: boolean\n```\n\nLitSX boolean attribute binding for <button>.",
         };
       },
       async computeLitsxProjectCompletions() { return []; },
@@ -553,7 +556,8 @@ describe("vscode-litsx extension activation", () => {
       document,
       document.positionAt(document.getText().indexOf("?disabled")),
     );
-    assert.strictEqual(hover.contents[1], "LitSX boolean attribute binding for <button>.");
+    assert.strictEqual(hover.contents.length, 1);
+    assert.strictEqual(hover.contents[0].value, "```jsx\n?disabled: boolean\n```\n\nLitSX boolean attribute binding for <button>.");
 
     document.languageId = "plaintext";
     vscodeMock.emitChange(document);

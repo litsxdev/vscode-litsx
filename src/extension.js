@@ -271,11 +271,14 @@ function activate(context) {
 
     const start = document.positionAt(hoverInfo.start);
     const end = document.positionAt(hoverInfo.start + hoverInfo.length);
-    return new vscode.Hover(
-      [
+    const hoverContents = hoverInfo.markdown
+      ? [new vscode.MarkdownString(hoverInfo.markdown)]
+      : [
         new vscode.MarkdownString().appendCodeblock(hoverInfo.code, "ts"),
         hoverInfo.documentation,
-      ],
+      ];
+    return new vscode.Hover(
+      hoverContents,
       new vscode.Range(start, end),
     );
   }
