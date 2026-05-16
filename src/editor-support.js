@@ -1,7 +1,6 @@
 import fs from "fs";
 import path from "path";
 import { createRequire } from "module";
-import defaultTs from "typescript";
 import { fileURLToPath } from "url";
 
 import {
@@ -11,12 +10,19 @@ import {
   inferLitsxAttributeInfoAtPosition,
   inferLitsxStaticHoistInfoAtPosition,
 } from "@litsx/typescript/virtualization";
-import { createLitsxEditorSession } from "@litsx/typescript/editor-session";
+import { createLitsxEditorSession as createBundledLitsxEditorSession } from "@litsx/typescript/editor-session";
 
 const MODULE_DIR = path.dirname(fileURLToPath(import.meta.url));
 const require = createRequire(import.meta.url);
 const SESSION_CACHE = new Map();
 const TYPESCRIPT_MODULE_CACHE = new Map();
+const EDITOR_SESSION_MODULE_CACHE = new Map();
+const AUTHORED_DIAGNOSTIC_TS = {
+  DiagnosticCategory: {
+    Warning: 0,
+    Error: 1,
+  },
+};
 
 let runtimeConfig = {
   resolveTypeScript: null,
@@ -46,6 +52,30 @@ function getBundledTypeScriptLibDir() {
   ];
 
   return candidateDirs.find((candidateDir) => fs.existsSync(path.join(candidateDir, "lib.esnext.full.d.ts"))) ?? null;
+}
+
+function getDevelopmentTypeScriptLibDir() {
+  try {
+    return path.dirname(require.resolve("typescript/lib/typescript.js"));
+  } catch {
+    return getBundledTypeScriptLibDir();
+  }
+}
+
+function getBuiltInTypeScriptLibDir(vscode) {
+  const builtInTypeScriptExtension = vscode?.extensions?.getExtension?.("vscode.typescript-language-features");
+  const extensionPath = builtInTypeScriptExtension?.extensionPath;
+  if (typeof extensionPath !== "string" || !extensionPath) {
+    return null;
+  }
+
+  const candidateDirs = [
+    path.resolve(extensionPath, "node_modules", "typescript", "lib"),
+    path.resolve(extensionPath, "..", "node_modules", "typescript", "lib"),
+    path.resolve(extensionPath, "..", "..", "node_modules", "typescript", "lib"),
+  ];
+
+  return candidateDirs.find((candidateDir) => fs.existsSync(path.join(candidateDir, "typescript.js"))) ?? null;
 }
 
 function getParserPlugins(languageId) {
@@ -98,9 +128,75 @@ function loadTypeScriptModule(modulePath) {
   return typescript;
 }
 
-async function loadEditorSessionModule() {
+function resolveTypeScriptModulePathFromLibDir(libDir) {
+  if (typeof libDir !== "string" || !libDir) {
+    return null;
+  }
+
+  const modulePath = path.join(libDir, "typescript.js");
+  return fs.existsSync(modulePath) ? modulePath : null;
+}
+
+function loadDevelopmentTypeScript() {
+  const modulePath = resolveTypeScriptModulePathFromLibDir(getDevelopmentTypeScriptLibDir());
+  if (!modulePath) {
+    return null;
+  }
+
   return {
-    createLitsxEditorSession,
+    typescript: loadTypeScriptModule(modulePath),
+    source: "development",
+    modulePath,
+    bundledLibDir: path.dirname(modulePath),
+  };
+}
+
+function resolveWorkspaceModulePath(fileName, specifier) {
+  if (typeof fileName !== "string" || !fileName) {
+    return null;
+  }
+
+  let currentDir = path.dirname(fileName);
+
+  while (currentDir && currentDir !== path.dirname(currentDir)) {
+    try {
+      return require.resolve(specifier, { paths: [currentDir] });
+    } catch {}
+
+    currentDir = path.dirname(currentDir);
+  }
+
+  return null;
+}
+
+function loadEditorSessionModuleFromPath(modulePath) {
+  if (EDITOR_SESSION_MODULE_CACHE.has(modulePath)) {
+    return EDITOR_SESSION_MODULE_CACHE.get(modulePath);
+  }
+
+  const loaded = require(modulePath);
+  const moduleExports = loaded?.default ?? loaded;
+  EDITOR_SESSION_MODULE_CACHE.set(modulePath, moduleExports);
+  return moduleExports;
+}
+
+async function loadEditorSessionModule(fileName) {
+  const workspaceModulePath = resolveWorkspaceModulePath(fileName, "@litsx/typescript/editor-session");
+
+  if (workspaceModulePath) {
+    try {
+      return {
+        createLitsxEditorSession: loadEditorSessionModuleFromPath(workspaceModulePath).createLitsxEditorSession,
+        source: "workspace",
+        modulePath: workspaceModulePath,
+      };
+    } catch {}
+  }
+
+  return {
+    createLitsxEditorSession: createBundledLitsxEditorSession,
+    source: "extension",
+    modulePath: "extension:@litsx/typescript/editor-session",
   };
 }
 
@@ -163,12 +259,20 @@ function createWorkspaceTypeScriptResolver(vscode) {
       } catch {}
     }
 
-    return {
-      typescript: defaultTs,
-      source: "extension",
-      modulePath: "extension:typescript",
-      bundledLibDir: getBundledTypeScriptLibDir(),
-    };
+    const builtInLibDir = getBuiltInTypeScriptLibDir(vscode);
+    const builtInModulePath = resolveTypeScriptModulePathFromLibDir(builtInLibDir);
+    if (builtInModulePath) {
+      try {
+        return {
+          typescript: loadTypeScriptModule(builtInModulePath),
+          source: "vscode-builtin",
+          modulePath: builtInModulePath,
+          bundledLibDir: builtInLibDir,
+        };
+      } catch {}
+    }
+
+    return loadDevelopmentTypeScript();
   };
 }
 
@@ -194,32 +298,41 @@ async function resolveTypeScriptForFile(fileName) {
     };
   }
 
-  return {
-    typescript: defaultTs,
-    source: "extension",
-    modulePath: "extension:typescript",
-    bundledLibDir: getBundledTypeScriptLibDir(),
-  };
+  const developmentTypeScript = loadDevelopmentTypeScript();
+  if (developmentTypeScript) {
+    return developmentTypeScript;
+  }
+
+  throw new Error(
+    "LitSX could not resolve a TypeScript runtime. Install TypeScript in the workspace or use the VS Code bundled TypeScript extension.",
+  );
 }
 
 async function getProjectSession(fileName) {
-  const { createLitsxEditorSession } = await loadEditorSessionModule();
+  const editorSessionModule = await loadEditorSessionModule(fileName);
   const resolution = await resolveTypeScriptForFile(fileName);
-  const sessionKey = `${resolution.modulePath}:${resolution.bundledLibDir ?? ""}`;
+  const sessionKey = `${editorSessionModule.modulePath}:${resolution.modulePath}:${resolution.bundledLibDir ?? ""}`;
   let session = SESSION_CACHE.get(sessionKey);
 
   if (!session) {
-    session = createLitsxEditorSession({
+    session = editorSessionModule.createLitsxEditorSession({
       typescript: resolution.typescript,
       bundledLibDir: resolution.bundledLibDir,
       trace: isTraceEnabled(),
       logger: getLogger(),
     });
     SESSION_CACHE.set(sessionKey, session);
-    if (isTraceEnabled() && resolution.source !== "workspace") {
-      getLogger()?.appendLine?.(
-        `editorSupportTypeScript source=${resolution.source} module=${resolution.modulePath}`,
-      );
+    if (isTraceEnabled()) {
+      if (editorSessionModule.source !== "workspace") {
+        getLogger()?.appendLine?.(
+          `editorSupportLitsxTypeScript source=${editorSessionModule.source} module=${editorSessionModule.modulePath}`,
+        );
+      }
+      if (resolution.source !== "workspace") {
+        getLogger()?.appendLine?.(
+          `editorSupportTypeScript source=${resolution.source} module=${resolution.modulePath}`,
+        );
+      }
     }
   }
 
@@ -227,7 +340,7 @@ async function getProjectSession(fileName) {
 }
 
 async function computeLitsxDiagnostics(sourceText, languageId) {
-  return collectLitsxAuthoredDiagnostics(sourceText, defaultTs, {
+  return collectLitsxAuthoredDiagnostics(sourceText, AUTHORED_DIAGNOSTIC_TS, {
     plugins: getParserPlugins(languageId),
   });
 }

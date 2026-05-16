@@ -1,5 +1,8 @@
 import commonjs from "@rollup/plugin-commonjs";
 import nodeResolve from "@rollup/plugin-node-resolve";
+import path from "path";
+
+const TYPESCRIPT_SHIM_ID = path.resolve("src/typescript-shim.js");
 
 const EXTERNAL_IDS = new Set([
   "fs",
@@ -28,6 +31,16 @@ export default {
     chunkFileNames: "chunks/[name]-[hash].cjs",
   },
   plugins: [
+    {
+      name: "alias-typescript-shim",
+      resolveId(source) {
+        if (source === "typescript") {
+          return TYPESCRIPT_SHIM_ID;
+        }
+
+        return null;
+      },
+    },
     nodeResolve({
       preferBuiltins: true,
       exportConditions: ["import", "default"],

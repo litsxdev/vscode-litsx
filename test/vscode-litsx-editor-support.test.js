@@ -517,6 +517,101 @@ describe("vscode-litsx editor support", () => {
     assert.strictEqual(resolution.bundledLibDir, workspaceTsDir);
   });
 
+  it("falls back to VS Code bundled TypeScript when workspace TypeScript is unavailable", async () => {
+    const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "litsx-vscode-builtin-ts-"));
+    const filePath = path.join(tempDir, "component.litsx");
+    const builtInExtensionPath = path.join(tempDir, "extensions", "typescript-language-features");
+    const builtInTsDir = path.join(tempDir, "extensions", "node_modules", "typescript", "lib");
+    const builtInTsFile = path.join(builtInTsDir, "typescript.js");
+
+    fs.mkdirSync(builtInExtensionPath, { recursive: true });
+    fs.mkdirSync(builtInTsDir, { recursive: true });
+    fs.writeFileSync(builtInTsFile, "module.exports = { version: 'builtin-ts-test' };");
+    fs.writeFileSync(filePath, "const view = <button />;\n");
+
+    const resolver = createWorkspaceTypeScriptResolver({
+      Uri: {
+        file(fsPath) {
+          return { fsPath };
+        },
+      },
+      extensions: {
+        getExtension(id) {
+          return id === "vscode.typescript-language-features"
+            ? { extensionPath: builtInExtensionPath }
+            : null;
+        },
+      },
+      workspace: {
+        workspaceFolders: [
+          {
+            uri: {
+              fsPath: tempDir,
+            },
+          },
+        ],
+        getConfiguration() {
+          return {
+            get(_key, fallbackValue) {
+              return fallbackValue;
+            },
+          };
+        },
+      },
+    });
+
+    const resolution = await resolver(filePath);
+
+    assert.strictEqual(resolution.source, "vscode-builtin");
+    assert.strictEqual(resolution.typescript.version, "builtin-ts-test");
+    assert.strictEqual(resolution.bundledLibDir, builtInTsDir);
+  });
+
+  it("prefers workspace @litsx/typescript editor-session when available", async () => {
+    const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "litsx-vscode-workspace-editor-session-"));
+    const filePath = path.join(tempDir, "component.litsx");
+    const workspacePackageDir = path.join(tempDir, "node_modules", "@litsx", "typescript");
+    const workspaceEditorSessionPath = path.join(workspacePackageDir, "editor-session.cjs");
+    const sourceText = "const view = <button />;\n";
+
+    fs.mkdirSync(workspacePackageDir, { recursive: true });
+    fs.writeFileSync(
+      path.join(workspacePackageDir, "package.json"),
+      JSON.stringify({
+        name: "@litsx/typescript",
+        exports: {
+          "./editor-session": "./editor-session.cjs",
+        },
+      }),
+    );
+    fs.writeFileSync(
+      workspaceEditorSessionPath,
+      [
+        "exports.createLitsxEditorSession = function createLitsxEditorSession() {",
+        "  return {",
+        "    getDiagnostics() { return []; },",
+        "    getHover() {",
+        "      return {",
+        "        start: 0,",
+        "        length: 4,",
+        "        code: 'workspace-session',",
+        "        documentation: 'workspace @litsx/typescript',",
+        "      };",
+        "    },",
+        "    getCompletions() { return []; },",
+        "  };",
+        "};",
+        "",
+      ].join("\n"),
+    );
+    fs.writeFileSync(filePath, sourceText);
+
+    const hover = await computeLitsxProjectHover(filePath, sourceText, "litsx", sourceText.indexOf("view"));
+
+    assert.strictEqual(hover.code, "workspace-session");
+    assert.strictEqual(hover.documentation, "workspace @litsx/typescript");
+  }, 15000);
+
   it("logs fallback TypeScript resolution when trace is enabled", async () => {
     const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "litsx-vscode-fallback-log-"));
     const filePath = path.join(tempDir, "component.litsx");
