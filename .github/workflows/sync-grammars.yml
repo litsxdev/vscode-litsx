@@ -83,7 +83,7 @@ jobs:
             > .changeset/sync-generated-grammars.md
 
       - name: Open grammar sync pull request
-        uses: peter-evans/create-pull-request@v7
+        uses: peter-evans/create-pull-request@v8
         with:
           token: ${{ steps.app-token.outputs.token }}
           branch: automation/sync-grammars
